@@ -208,6 +208,27 @@
   }
   .field select:focus{ outline:none; border-color:var(--purple); }
   .field select option{ background:#13113A; color:#fff; }
+  .step-label{ color:var(--purple-light); font-family:var(--font-display); font-size:13px; font-weight:600; margin-bottom:10px; }
+  .pf-title{ font-family:var(--font-display); font-weight:900; font-size:24px; line-height:1.25; margin:0 0 6px; }
+  .pf-hint{ color:var(--text-tertiary); font-size:14px; margin:0 0 18px; }
+  .sub-label{ font-family:var(--font-display); font-weight:600; font-size:13px; color:var(--text-secondary); margin:20px 0 10px; }
+  .chips{ display:flex; flex-wrap:wrap; gap:10px; }
+  .chip{
+    appearance:none; cursor:pointer; font-family:var(--font-body); font-size:14px;
+    padding:10px 16px; border-radius:9999px; color:var(--text-secondary);
+    background:var(--bg-surface-alt); border:1px solid var(--border);
+  }
+  .chip:hover{ border-color:var(--purple); }
+  .chip.sel{ color:#fff; border-color:var(--orange); background:rgba(255,94,0,0.18); box-shadow:0 0 12px rgba(255,94,0,0.25); }
+  .chips.uf .chip{ padding:8px 12px; min-width:52px; text-align:center; }
+  .nav-actions{ display:flex; gap:12px; margin-top:28px; }
+  .pf-other{ margin-top:12px; max-width:360px; }
+  .pf-other input, .pf-name input{
+    width:100%; background:var(--bg-surface-alt); border:1px solid var(--border); color:var(--text);
+    padding:12px 14px; border-radius:12px; font-size:15px; font-family:var(--font-body);
+  }
+  .pf-other input:focus, .pf-name input:focus{ outline:none; border-color:var(--purple); box-shadow:0 0 0 3px rgba(124,58,237,0.2); }
+  .pf-name{ max-width:360px; }
   .field-error{
     display:none;
     font-size:12px;
@@ -521,43 +542,12 @@
   <!-- PERFIL (só para quem ainda não tem cadastro) -->
   <section class="screen" id="screen-profile">
     <div class="intro-card">
-      <h2>Primeira vez por aqui? Conta um pouco sobre você</h2>
-      <p>Não encontramos seu cadastro. Preencha uma vez só e nos próximos totens já reconhecemos você.</p>
-      <div class="field">
-        <label for="pfNome">Seu nome *</label>
-        <input type="text" id="pfNome" placeholder="Ex.: Ana Ribeiro" maxlength="60">
+      <div class="step-label" id="pfStepLabel">Passo 1 de 5</div>
+      <div id="pfBody"></div>
+      <div class="nav-actions">
+        <button class="btn btn-ghost" id="pfBack">Voltar</button>
+        <button class="btn btn-primary" id="pfNext" disabled>Continuar</button>
       </div>
-      <div class="field">
-        <label for="pfTipo">Tipo de atuação</label>
-        <select id="pfTipo">
-          <option value="">Selecione</option>
-          <option>Autônomo</option>
-          <option>Imobiliária (sem filial)</option>
-          <option>Imobiliária (com filial)</option>
-          <option>Incorporadora</option>
-        </select>
-      </div>
-      <div class="field">
-        <label for="pfFuncao">Sua função</label>
-        <input type="text" id="pfFuncao" placeholder="Ex.: Corretor, Gestor, Marketing" maxlength="60">
-      </div>
-      <div class="field">
-        <label for="pfFoco">Foco de atuação</label>
-        <input type="text" id="pfFoco" placeholder="Ex.: Venda, Locação, Lançamentos" maxlength="60">
-      </div>
-      <div class="field">
-        <label for="pfFaixa">Faixa de preço</label>
-        <input type="text" id="pfFaixa" placeholder="Ex.: Até R$ 500 mil" maxlength="60">
-      </div>
-      <div class="field">
-        <label for="pfCanais">Canais que você usa</label>
-        <input type="text" id="pfCanais" placeholder="Ex.: Zap, OLX, Instagram" maxlength="120">
-      </div>
-      <div class="field">
-        <label for="pfRegiao">Região de atuação</label>
-        <input type="text" id="pfRegiao" placeholder="Ex.: Zona Sul de São Paulo" maxlength="80">
-      </div>
-      <button class="btn btn-primary" id="profileBtn" disabled>Continuar</button>
     </div>
   </section>
 
@@ -1112,31 +1102,183 @@ async function submitPhone(){
     goToGameData();
   }else{
     // não achou (ou falhou/timeout): trata como pessoa nova
+    pfReset();
+    pfRender();
     showScreen("profile");
-    updateProfileButtonState();
   }
   btn.disabled = !isValidPhone(el("phoneInput").value);
 }
 
-function updateProfileButtonState(){
-  el("profileBtn").disabled = el("pfNome").value.trim().length === 0;
+/* ===== Perfil (segue o doc "Perfil Ideal") ===== */
+const PF_TIPOS = [
+  {v:"autonomo", l:"Autônomo"},
+  {v:"imob_unica", l:"Imobiliária (sem filial)"},
+  {v:"imob_rede", l:"Imobiliária (com filial)"},
+  {v:"incorporadora", l:"Incorporadora"},
+];
+const PF_FUNCOES = ["Corretor", "Gestor", "CEO/Sócio", "Outros"];
+const PF_FOCOS = [
+  {v:"aluguel", l:"Aluguel"},
+  {v:"venda_usado", l:"Venda · Usados / Secundário"},
+  {v:"venda_lanc", l:"Venda · Lançamentos / Primário"},
+];
+const PF_FAIXAS_ALUGUEL = ["Até R$ 1.500", "R$ 1.501–3.000", "R$ 3.001–5.000", "R$ 5.001–10.000", "Acima de R$ 10.000"];
+const PF_FAIXAS_VENDA = ["Até R$ 300 mil", "R$ 300–600 mil", "R$ 600–750 mil", "R$ 750 mil–1 Mi", "R$ 1–2,5 Mi", "Acima de R$ 2,5 Mi"];
+const PF_UFS = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+const UF_LITORAL = ["AP","PA","MA","PI","CE","RN","PB","PE","AL","SE","BA","ES","RJ","SP","PR","SC","RS"];
+const PF_CANAIS = ["ZAP","Viva Real","OLX","Chaves na Mão","QuintoAndar","Imovelweb","Apto.vc","Facebook","Instagram","TikTok","Outros"];
+
+let pf = null;
+let pfStep = 1;
+const PF_STEPS = 5;
+
+function pfReset(){
+  pf = { nome:"", tipo:"", funcao:"", funcaoOutro:"", foco:new Set(), faixaAluguel:new Set(), faixaVenda:new Set(), uf:"", regioes:new Set(), canais:new Set(), canaisOutro:"" };
+  pfStep = 1;
+}
+function pfToggle(set, v){ set.has(v) ? set.delete(v) : set.add(v); }
+function pfHasVenda(){ return pf.foco.has("venda_usado") || pf.foco.has("venda_lanc"); }
+
+function pfSelectTipo(v){
+  pf.tipo = v;
+  if(v === "autonomo"){ pf.funcao = "Corretor"; pf.funcaoOutro = ""; }
+  else if(pf.funcao === "Corretor" && pf._autoFuncao){ pf.funcao = ""; }
+  pf._autoFuncao = (v === "autonomo");
+  if(v === "incorporadora") pf.foco.add("venda_lanc");
+}
+
+function pfValid(){
+  switch(pfStep){
+    case 1: return pf.nome.trim().length > 0;
+    case 2:
+      if(!pf.tipo) return false;
+      if(pf.tipo === "autonomo") return true;
+      if(!pf.funcao) return false;
+      return pf.funcao !== "Outros" || pf.funcaoOutro.trim().length > 0;
+    case 3:
+      if(pf.foco.size === 0) return false;
+      if(pf.foco.has("aluguel") && pf.faixaAluguel.size === 0) return false;
+      if(pfHasVenda() && pf.faixaVenda.size === 0) return false;
+      return true;
+    case 4: return !!pf.uf && pf.regioes.size > 0;
+    case 5: return pf.canais.size > 0 && (!pf.canais.has("Outros") || pf.canaisOutro.trim().length > 0);
+  }
+  return false;
+}
+
+function mkChips(options, isSel, onClick, extraClass){
+  const wrap = document.createElement("div");
+  wrap.className = "chips" + (extraClass ? " " + extraClass : "");
+  options.forEach(o => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip" + (isSel(o.v) ? " sel" : "");
+    b.textContent = o.l;
+    b.addEventListener("click", () => { onClick(o.v); pfRender(); });
+    wrap.appendChild(b);
+  });
+  return wrap;
+}
+function mkTitle(body, title, hint){
+  const h = document.createElement("h2"); h.className = "pf-title"; h.textContent = title; body.appendChild(h);
+  if(hint){ const p = document.createElement("p"); p.className = "pf-hint"; p.textContent = hint; body.appendChild(p); }
+}
+function mkSub(body, text){ const d = document.createElement("div"); d.className = "sub-label"; d.textContent = text; body.appendChild(d); }
+function mkOther(body, value, placeholder, onInput){
+  const w = document.createElement("div"); w.className = "pf-other";
+  const i = document.createElement("input"); i.type = "text"; i.maxLength = 60; i.placeholder = placeholder; i.value = value;
+  i.addEventListener("input", () => { onInput(i.value); el("pfNext").disabled = !pfValid(); });
+  w.appendChild(i); body.appendChild(w);
+}
+
+function pfRender(){
+  const body = el("pfBody");
+  body.innerHTML = "";
+  el("pfStepLabel").textContent = "Passo " + pfStep + " de " + PF_STEPS;
+  const opts = (arr) => arr.map(x => ({v:x, l:x}));
+
+  if(pfStep === 1){
+    mkTitle(body, "Como você quer ser chamado?", "Não encontramos seu cadastro. Responda uma vez só e nos próximos totens já reconhecemos você.");
+    const w = document.createElement("div"); w.className = "pf-name";
+    const i = document.createElement("input"); i.type = "text"; i.maxLength = 60; i.placeholder = "Ex.: Ana"; i.value = pf.nome;
+    i.addEventListener("input", () => { pf.nome = i.value; el("pfNext").disabled = !pfValid(); });
+    i.addEventListener("keydown", e => { if(e.key === "Enter" && pfValid()) pfNextStep(); });
+    w.appendChild(i); body.appendChild(w);
+  }
+  else if(pfStep === 2){
+    mkTitle(body, "Onde você trabalha?");
+    body.appendChild(mkChips(PF_TIPOS, v => pf.tipo === v, v => pfSelectTipo(v)));
+    if(pf.tipo && pf.tipo !== "autonomo"){
+      mkSub(body, "Qual a sua função?");
+      body.appendChild(mkChips(opts(PF_FUNCOES), v => pf.funcao === v, v => { pf.funcao = v; }));
+      if(pf.funcao === "Outros") mkOther(body, pf.funcaoOutro, "Qual é a sua função?", v => { pf.funcaoOutro = v; });
+    }
+  }
+  else if(pfStep === 3){
+    mkTitle(body, "Qual o seu foco?", "Pode marcar mais de um.");
+    body.appendChild(mkChips(PF_FOCOS, v => pf.foco.has(v), v => pfToggle(pf.foco, v)));
+    if(pf.foco.has("aluguel")){
+      mkSub(body, "Faixa de preço · Aluguel");
+      body.appendChild(mkChips(opts(PF_FAIXAS_ALUGUEL), v => pf.faixaAluguel.has(v), v => pfToggle(pf.faixaAluguel, v)));
+    }
+    if(pfHasVenda()){
+      mkSub(body, "Faixa de preço · Venda");
+      body.appendChild(mkChips(opts(PF_FAIXAS_VENDA), v => pf.faixaVenda.has(v), v => pfToggle(pf.faixaVenda, v)));
+    }
+  }
+  else if(pfStep === 4){
+    mkTitle(body, "Onde você atua?", "Escolha o estado e a região de atuação.");
+    body.appendChild(mkChips(opts(PF_UFS), v => pf.uf === v, v => {
+      pf.uf = v;
+      if(!UF_LITORAL.includes(v)) pf.regioes.delete("Litoral");
+    }, "uf"));
+    if(pf.uf){
+      mkSub(body, "Região de atuação · " + pf.uf);
+      const regs = ["Capital", "Interior"].concat(UF_LITORAL.includes(pf.uf) ? ["Litoral"] : []);
+      body.appendChild(mkChips(opts(regs), v => pf.regioes.has(v), v => pfToggle(pf.regioes, v)));
+    }
+  }
+  else if(pfStep === 5){
+    mkTitle(body, "Onde você divulga hoje?", "Pode marcar mais de uma plataforma.");
+    body.appendChild(mkChips(opts(PF_CANAIS), v => pf.canais.has(v), v => pfToggle(pf.canais, v)));
+    if(pf.canais.has("Outros")) mkOther(body, pf.canaisOutro, "Qual plataforma?", v => { pf.canaisOutro = v; });
+  }
+
+  el("pfNext").textContent = pfStep === PF_STEPS ? "Concluir" : "Continuar";
+  el("pfNext").disabled = !pfValid();
+}
+
+function pfNextStep(){
+  if(!pfValid()) return;
+  if(pfStep < PF_STEPS){ pfStep++; pfRender(); window.scrollTo(0, 0); }
+  else submitProfile();
+}
+function pfBackStep(){
+  if(pfStep > 1){ pfStep--; pfRender(); }
+  else { showScreen("phone"); }
+}
+
+function pfBuildPayload(){
+  const tipoLabel = (PF_TIPOS.find(t => t.v === pf.tipo) || {}).l || "";
+  const funcao = pf.tipo === "autonomo" ? "Corretor" : (pf.funcao === "Outros" ? "Outros: " + pf.funcaoOutro.trim() : pf.funcao);
+  const focoLabels = PF_FOCOS.filter(f => pf.foco.has(f.v)).map(f => f.l);
+  const faixas = [];
+  if(pf.foco.has("aluguel")) faixas.push("Aluguel: " + PF_FAIXAS_ALUGUEL.filter(x => pf.faixaAluguel.has(x)).join(", "));
+  if(pfHasVenda()) faixas.push("Venda: " + PF_FAIXAS_VENDA.filter(x => pf.faixaVenda.has(x)).join(", "));
+  const canais = PF_CANAIS.filter(c => pf.canais.has(c)).map(c => c === "Outros" ? "Outros: " + pf.canaisOutro.trim() : c);
+  const regiao = pf.uf + ": " + ["Capital","Interior","Litoral"].filter(r => pf.regioes.has(r)).join(", ");
+  return {
+    nome: pf.nome.trim(), tipo: tipoLabel, funcao,
+    foco: focoLabels.join(", "), faixa_preco: faixas.join(" | "),
+    canais: canais.join(", "), regiao,
+  };
 }
 
 function submitProfile(){
-  const nome = el("pfNome").value.trim();
-  if(!nome) return;
-  session.nome = nome;
-  fireAndForget({
-    action: "save",
-    telefone: session.phone,
-    nome,
-    tipo: el("pfTipo").value,
-    funcao: el("pfFuncao").value.trim(),
-    foco: el("pfFoco").value.trim(),
-    faixa_preco: el("pfFaixa").value.trim(),
-    canais: el("pfCanais").value.trim(),
-    regiao: el("pfRegiao").value.trim(),
-  });
+  if(!pfValid()) return;
+  const data = pfBuildPayload();
+  session.nome = data.nome;
+  fireAndForget(Object.assign({ action: "save", telefone: session.phone }, data));
   logVisit(session.phone);
   goToGameData();
 }
@@ -1183,15 +1325,15 @@ function validateEmailField(){
 el("phoneInput").addEventListener("input", () => { updatePhoneButtonState(); validatePhoneField(); });
 el("phoneInput").addEventListener("keydown", e => { if(e.key === "Enter") submitPhone(); });
 el("phoneBtn").addEventListener("click", submitPhone);
-el("pfNome").addEventListener("input", updateProfileButtonState);
-el("profileBtn").addEventListener("click", submitProfile);
+el("pfNext").addEventListener("click", pfNextStep);
+el("pfBack").addEventListener("click", pfBackStep);
 el("agencyInput").addEventListener("input", updateStartButtonState);
 el("emailInput").addEventListener("input", () => { updateStartButtonState(); validateEmailField(); });
 el("emailInput").addEventListener("blur", validateEmailField);
 
 function resetToIntro(){
-  ["phoneInput","pfNome","pfFuncao","pfFoco","pfFaixa","pfCanais","pfRegiao","agencyInput","emailInput"].forEach(id => el(id).value = "");
-  el("pfTipo").value = "";
+  ["phoneInput","agencyInput","emailInput"].forEach(id => el(id).value = "");
+  pfReset();
   el("emailInput").closest(".field").classList.remove("invalid");
   el("phoneInput").closest(".field").classList.remove("invalid");
   session = { phone: "", nome: "", isNew: false };
