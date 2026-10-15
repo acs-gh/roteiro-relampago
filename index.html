@@ -939,6 +939,7 @@ function finishGame(){
   const totalTime = Math.round(state.answersLog.reduce((sum, a) => sum + a.tempoSegundos, 0) * 10) / 10;
   lastSavedTs = saveScore(state.nickname, state.agency, state.score, totalTime);
   logPlayToSheetDb(totalTime);
+  logPlayToN8n(totalTime);
   el("finalScore").textContent = state.score + "/" + QUESTIONS.length;
   el("finalTier").textContent = tierForScore(state.score, QUESTIONS.length);
   colorProgressBarByResults();
@@ -995,6 +996,22 @@ function renderLeaderboard(){
 }
 
 let lastSavedTs = null;
+
+/* Envia a partida para a tabela do n8n (fire-and-forget, nunca bloqueia o jogador) */
+function logPlayToN8n(totalTime){
+  fireAndForget({
+    action: "play",
+    telefone: state.phone || "",
+    nome: state.nickname || "",
+    imobiliaria: state.agency || "",
+    email: state.email || "",
+    pontuacao: String(state.score),
+    total_perguntas: String(QUESTIONS.length),
+    tempo_total_segundos: String(totalTime),
+    respostas: JSON.stringify(state.answersLog),
+    totem_id: TOTEM_ID ? String(TOTEM_ID) : "",
+  });
+}
 
 /* Registra a partida no banco compartilhado do artefato (capability "db"),
    para depois ser sincronizado com uma planilha do Google Sheets. */
