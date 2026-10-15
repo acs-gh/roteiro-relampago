@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roteiro Relâmpago</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#08071A;
+    --bg-surface:rgba(19,17,58,0.85);
+    --bg-surface-alt:rgba(13,11,43,0.9);
+    --border:#2A2560;
+    --purple:#7C3AED;
+    --purple-deep:#5B21B6;
+    --purple-light:#8B7FC7;
+    --orange:#FF5E00;
+    --orange-light:#FF8C42;
+    --text:#FFFFFF;
+    --text-secondary:#C4B5FD;
+    --text-tertiary:#9B8EC4;
+    --text-muted:#6B5E9A;
+    --success:#22C55E;
+    --success-light:#4ADE80;
+    --error:#EF4444;
+    --error-light:#FCA5A5;
+    --font-display:'Outfit', sans-serif;
+    --font-body:'Inter', sans-serif;
+  }
+  :root{
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box;}
+  html, body{
+    height:100%;
+  }
+  body{
+    margin:0;
+    background:var(--bg);
+    background-image:
+      linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size:40px 40px;
+    color:var(--text);
+    font-family:var(--font-body);
+    min-height:100vh;
+    position:relative;
+  }
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    pointer-events:none;
+    background:
+      radial-gradient(circle at 15% 10%, rgba(255,94,0,0.14), transparent 42%),
+      radial-gradient(circle at 85% 75%, rgba(124,58,237,0.16), transparent 42%);
+  }
+  .wrap{
+    max-width:1100px;
+    margin:0 auto;
+    padding:24px 20px 64px;
+  }
+
+  /* ---------- Header ---------- */
+  header.top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    padding-bottom:20px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:28px;
+    flex-wrap:wrap;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .bolt{
+    width:30px;height:30px;flex:none;
+    filter:drop-shadow(0 0 6px rgba(255,94,0,0.6));
+  }
+  .brand h1{
+    font-family:var(--font-display);
+    font-weight:900;
+    font-size:22px;
+    letter-spacing:0.3px;
+    margin:0;
+    color:var(--orange);
+  }
+  .brand small{
+    display:block;
+    color:var(--text-tertiary);
+    font-size:12px;
+    margin-top:2px;
+  }
+  .hud{
+    display:flex;
+    align-items:center;
+    gap:18px;
+  }
+  .hud .stat{
+    text-align:right;
+  }
+  .hud .stat .num{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:20px;
+    color:var(--text);
+    line-height:1;
+  }
+  .hud .stat .lbl{
+    font-size:11px;
+    color:var(--text-muted);
+    text-transform:none;
+  }
+
+  /* ---------- Progress dots ---------- */
+  .progress{
+    display:flex;
+    gap:6px;
+    margin-bottom:28px;
+  }
+  .progress .dot{
+    flex:1;
+    height:5px;
+    border-radius:9999px;
+    background:var(--border);
+    overflow:hidden;
+  }
+  .progress .dot.done{ background:var(--orange); }
+  .progress .dot.current{ background:var(--purple); box-shadow:0 0 6px var(--purple); }
+  .progress .dot.correct{ background:var(--success); box-shadow:0 0 6px rgba(34,197,94,0.6); }
+  .progress .dot.wrong{ background:var(--error); box-shadow:0 0 6px rgba(239,68,68,0.6); }
+
+  /* ---------- Screens ---------- */
+  .screen{ display:none; }
+  .screen.active{ display:block; }
+
+  /* ---------- Intro ---------- */
+  .intro-card{
+    background:var(--bg-surface);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:40px 32px;
+    box-shadow:0 0 30px rgba(255,94,0,0.08);
+  }
+  .intro-card h2{
+    font-family:var(--font-display);
+    font-weight:900;
+    font-size:28px;
+    line-height:1.25;
+    margin:0 0 14px;
+    max-width:520px;
+    color:var(--text);
+  }
+  .intro-card p{
+    color:var(--text-tertiary);
+    line-height:1.6;
+    max-width:560px;
+    margin:0 0 28px;
+  }
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    max-width:360px;
+    margin-bottom:24px;
+  }
+  .field label{
+    font-size:13px;
+    font-family:var(--font-display);
+    font-weight:600;
+    color:var(--text-secondary);
+  }
+  .field input{
+    background:var(--bg-surface-alt);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:12px 14px;
+    border-radius:12px;
+    font-size:15px;
+    font-family:var(--font-body);
+  }
+  .field input::placeholder{
+    color:var(--text-muted);
+  }
+  .field input:focus{
+    outline:none;
+    border-color:var(--purple);
+    box-shadow:0 0 0 3px rgba(124,58,237,0.2);
+  }
+  .field select{
+    width:100%;
+    padding:14px 16px;
+    border-radius:12px;
+    border:1px solid var(--border);
+    background:rgba(8,7,26,0.6);
+    color:var(--text);
+    font:inherit;
+    font-size:16px;
+  }
+  .field select:focus{ outline:none; border-color:var(--purple); }
+  .field select option{ background:#13113A; color:#fff; }
+  .field-error{
+    display:none;
+    font-size:12px;
+    color:var(--error-light);
+  }
+  .field.invalid input{
+    border-color:var(--error);
+  }
+  .field.invalid .field-error{
+    display:block;
+  }
+  .btn{
+    appearance:none;
+    border:none;
+    cursor:pointer;
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:15px;
+    padding:13px 26px;
+    border-radius:9999px;
+    transition:transform .12s ease;
+  }
+  .btn:active{ transform:scale(0.98); }
+  .btn-primary{
+    background:linear-gradient(135deg, var(--purple-deep), var(--purple));
+    color:#FFFFFF;
+    box-shadow:0 0 20px rgba(124,58,237,0.35);
+  }
+  .btn-primary:disabled{
+    background:var(--bg-surface-alt);
+    color:var(--text-muted);
+    box-shadow:none;
+    cursor:not-allowed;
+  }
+  .btn-ghost{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text);
+  }
+
+  /* ---------- Question screen ---------- */
+  .q-head{ margin-bottom:22px; }
+  .q-head .kicker{
+    color:var(--purple-light);
+    font-family:var(--font-display);
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:6px;
+  }
+  .q-head h2{
+    font-family:var(--font-display);
+    font-weight:900;
+    font-size:24px;
+    line-height:1.3;
+    margin:0;
+    max-width:680px;
+    color:var(--text);
+  }
+
+  .options{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+  }
+  @media (max-width: 780px){
+    .options{ grid-template-columns:1fr; }
+  }
+
+  .option{
+    background:var(--bg-surface);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    border:1px solid var(--border);
+    border-radius:16px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  .option .video-box{
+    position:relative;
+    width:100%;
+    aspect-ratio:9/16;
+    background:#000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+  .option video{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    background:#000;
+    display:block;
+  }
+  .option .placeholder{
+    color:var(--text-muted);
+    font-family:var(--font-body);
+    font-size:13px;
+    text-align:center;
+    padding:20px;
+    line-height:1.5;
+  }
+  .option .play-overlay{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:2;
+    background:linear-gradient(180deg, rgba(8,7,26,0.05) 0%, rgba(8,7,26,0.4) 100%);
+  }
+  .option .play-overlay .play-circle{
+    width:56px;
+    height:56px;
+    border-radius:50%;
+    background:rgba(13,11,43,0.7);
+    border:2px solid rgba(255,255,255,0.85);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .option .play-overlay svg{
+    width:20px;
+    height:20px;
+    margin-left:3px;
+  }
+  .option .play-overlay.hidden{
+    display:none;
+  }
+  .option-body{
+    padding:14px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    flex:1;
+  }
+  .option .pick-btn{
+    background:var(--bg-surface-alt);
+    border:1px solid var(--border);
+    color:var(--text-secondary);
+    padding:10px;
+    border-radius:12px;
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .option .pick-btn:hover{ border-color:var(--purple); box-shadow:0 0 10px rgba(124,58,237,0.3); }
+  .option .verdict{
+    display:none;
+    font-family:var(--font-display);
+    font-size:12px;
+    font-weight:600;
+    align-items:center;
+    gap:6px;
+  }
+
+  .option.correct{ border-color:var(--success); box-shadow:0 0 16px rgba(34,197,94,0.3); }
+  .option.correct .verdict{ display:flex; color:var(--success-light); }
+  .option.correct .pick-btn{ display:none; }
+
+  .option.wrong{ border-color:var(--error); box-shadow:0 0 16px rgba(239,68,68,0.3); }
+  .option.wrong .verdict{ display:flex; color:var(--error-light); }
+  .option.wrong .pick-btn{ display:none; }
+
+  .option.dimmed{ opacity:0.5; }
+  .option.dimmed .pick-btn{ display:none; }
+
+  .explanation{
+    margin-top:22px;
+    background:var(--bg-surface);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    border-left:3px solid var(--orange);
+    border-top:1px solid var(--border);
+    border-right:1px solid var(--border);
+    border-bottom:1px solid var(--border);
+    padding:16px 18px;
+    border-radius:12px;
+    display:none;
+    line-height:1.6;
+    color:var(--text);
+  }
+  .explanation.show{ display:block; }
+  .explanation .tag{
+    display:block;
+    font-family:var(--font-display);
+    font-size:12px;
+    font-weight:700;
+    color:var(--orange-light);
+    margin-bottom:6px;
+  }
+
+  .nav-row{
+    display:flex;
+    justify-content:flex-end;
+    margin-top:24px;
+  }
+
+  /* ---------- Results ---------- */
+  .result-card{
+    background:var(--bg-surface);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:40px 32px;
+    text-align:center;
+    box-shadow:0 0 30px rgba(255,94,0,0.08);
+  }
+  .result-card .score-big{
+    font-family:var(--font-display);
+    font-weight:900;
+    font-size:56px;
+    color:var(--orange);
+    text-shadow:0 0 24px rgba(255,94,0,0.45);
+    line-height:1;
+  }
+  .result-card .score-label{
+    color:var(--text-tertiary);
+    margin-top:8px;
+    margin-bottom:4px;
+  }
+  .result-card .tier{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:18px;
+    color:var(--text);
+    margin:18px 0 30px;
+  }
+  .leaderboard{
+    max-width:420px;
+    margin:0 auto;
+    text-align:left;
+    background:var(--bg-surface-alt);
+    border:1px solid var(--border);
+    border-radius:12px;
+    overflow:hidden;
+  }
+  .leaderboard .row{
+    display:flex;
+    justify-content:space-between;
+    padding:10px 16px;
+    border-bottom:1px solid var(--border);
+    font-size:14px;
+  }
+  .leaderboard .row:last-child{ border-bottom:none; }
+  .leaderboard .row.you{ background:rgba(255,94,0,0.1); }
+  .leaderboard .rank{ color:var(--text-muted); width:28px; }
+  .leaderboard .name{ flex:1; color:var(--text-secondary); }
+  .leaderboard .time{ color:var(--text-muted); font-size:12px; margin-right:14px; white-space:nowrap; }
+  .leaderboard .pts{ font-family:var(--font-display); font-weight:700; color:var(--text); }
+  .result-actions{
+    display:flex;
+    gap:12px;
+    justify-content:center;
+    margin-top:28px;
+  }
+
+  footer.credit{
+    text-align:center;
+    color:var(--text-muted);
+    font-size:12px;
+    margin-top:40px;
+  }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <svg class="bolt" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M13 2L4 14H11L10 22L20 9H13L13 2Z" fill="#FF5E00"/>
+      </svg>
+      <div>
+        <h1>Roteiro Relâmpago</h1>
+        <small>Conecta Imobi — o corte certo vale ponto</small>
+      </div>
+    </div>
+    <div class="hud" id="hud" style="display:none;">
+      <div class="stat">
+        <div class="num" id="hudQuestion">1/10</div>
+        <div class="lbl">pergunta</div>
+      </div>
+      <div class="stat">
+        <div class="num" id="hudScore">0</div>
+        <div class="lbl">pontos</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="progress" id="progressBar"></div>
+
+  <!-- TELEFONE -->
+  <section class="screen active" id="screen-phone">
+    <div class="intro-card">
+      <h2>Cada vídeo tem um corte certo. Você sabe qual é?</h2>
+      <p>10 etapas de um vídeo vertical de imóvel, 3 formas de gravar cada uma. Assista aos clipes e escolha a opção que faria você assistir até o final se estivesse rolando o feed. Acertos viram pontos e um lugar no ranking do evento.</p>
+      <div class="field">
+        <label for="phoneInput">Seu telefone (com DDD) *</label>
+        <input type="tel" id="phoneInput" inputmode="tel" placeholder="(11) 91234-5678" maxlength="20" autocomplete="tel">
+        <span class="field-error" id="phoneError">Digite um telefone válido com DDD.</span>
+      </div>
+      <button class="btn btn-primary" id="phoneBtn" disabled>Continuar</button>
+    </div>
+  </section>
+
+  <!-- PERFIL (só para quem ainda não tem cadastro) -->
+  <section class="screen" id="screen-profile">
+    <div class="intro-card">
+      <h2>Primeira vez por aqui? Conta um pouco sobre você</h2>
+      <p>Não encontramos seu cadastro. Preencha uma vez só e nos próximos totens já reconhecemos você.</p>
+      <div class="field">
+        <label for="pfNome">Seu nome *</label>
+        <input type="text" id="pfNome" placeholder="Ex.: Ana Ribeiro" maxlength="60">
+      </div>
+      <div class="field">
+        <label for="pfTipo">Tipo de atuação</label>
+        <select id="pfTipo">
+          <option value="">Selecione</option>
+          <option>Autônomo</option>
+          <option>Imobiliária (sem filial)</option>
+          <option>Imobiliária (com filial)</option>
+          <option>Incorporadora</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="pfFuncao">Sua função</label>
+        <input type="text" id="pfFuncao" placeholder="Ex.: Corretor, Gestor, Marketing" maxlength="60">
+      </div>
+      <div class="field">
+        <label for="pfFoco">Foco de atuação</label>
+        <input type="text" id="pfFoco" placeholder="Ex.: Venda, Locação, Lançamentos" maxlength="60">
+      </div>
+      <div class="field">
+        <label for="pfFaixa">Faixa de preço</label>
+        <input type="text" id="pfFaixa" placeholder="Ex.: Até R$ 500 mil" maxlength="60">
+      </div>
+      <div class="field">
+        <label for="pfCanais">Canais que você usa</label>
+        <input type="text" id="pfCanais" placeholder="Ex.: Zap, OLX, Instagram" maxlength="120">
+      </div>
+      <div class="field">
+        <label for="pfRegiao">Região de atuação</label>
+        <input type="text" id="pfRegiao" placeholder="Ex.: Zona Sul de São Paulo" maxlength="80">
+      </div>
+      <button class="btn btn-primary" id="profileBtn" disabled>Continuar</button>
+    </div>
+  </section>
+
+  <!-- DADOS DO JOGO -->
+  <section class="screen" id="screen-intro">
+    <div class="intro-card">
+      <h2 id="greeting">Olá!</h2>
+      <p>Só mais dois dados para o ranking do evento.</p>
+      <div class="field">
+        <label for="agencyInput">Nome da imobiliária *</label>
+        <input type="text" id="agencyInput" placeholder="Ex.: Imobiliária Bairro Novo" maxlength="60" required>
+      </div>
+      <div class="field">
+        <label for="emailInput">Seu e-mail *</label>
+        <input type="email" id="emailInput" placeholder="ana@imobiliaria.com.br" maxlength="80" required>
+        <span class="field-error" id="emailError">Digite um e-mail válido.</span>
+      </div>
+      <button class="btn btn-primary" id="startBtn" disabled>Começar o jogo</button>
+    </div>
+  </section>
+
+  <!-- QUESTION -->
+  <section class="screen" id="screen-question">
+    <div class="q-head">
+      <div class="kicker" id="qKicker">ETAPA 1 · PREPARAÇÃO DO AMBIENTE</div>
+      <h2 id="qPrompt"></h2>
+    </div>
+    <div class="options" id="optionsRow"></div>
+    <div class="explanation" id="explanationBox">
+      <span class="tag">Por que essa é a escolha certa</span>
+      <span id="explanationText"></span>
+    </div>
+    <div class="nav-row">
+      <button class="btn btn-primary" id="nextBtn" style="display:none;">Próxima pergunta</button>
+    </div>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="screen" id="screen-results">
+    <div class="result-card">
+      <div class="score-big" id="finalScore">0/10</div>
+      <div class="score-label">acertos de primeira</div>
+      <div class="tier" id="finalTier"></div>
+      <div class="leaderboard" id="leaderboard"></div>
+      <div class="result-actions">
+        <button class="btn btn-ghost" id="replayBtn">Jogar novamente</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="credit">Roteiro Relâmpago — protótipo para o laboratório de produtos OLX no Conecta Imobi</footer>
+</div>
+
+<script>
+/* ======================================================
+   DADOS DAS PERGUNTAS
+   Cada opção referencia uma "key" (ex: p1_a). O mapa
+   VIDEO_SRC abaixo resolve essa key para a URL do vídeo.
+   Enquanto VIDEO_SRC[key] for null, mostramos um placeholder.
+   ====================================================== */
+const QUESTIONS = [
+  {
+    kicker: "ETAPA 1 · PREPARAÇÃO DO AMBIENTE",
+    prompt: "Antes de gravar o tour do apartamento, qual preparação do ambiente gera o melhor resultado?",
+    correct: "p1_a",
+    explanation: "Ambiente limpo, neutro (sem itens pessoais) e bem iluminado passa profissionalismo e ajuda o espectador a se imaginar no espaço.",
+    options: [
+      {key:"p1_a", letter:"A"},
+      {key:"p1_b", letter:"B"},
+      {key:"p1_c", letter:"C"},
+    ]
+  },
+  {
+    kicker: "ETAPA 2 · GANCHO DE ABERTURA",
+    prompt: "Qual é o melhor gatilho de abertura para prender a atenção e garantir que a pessoa assista o vídeo até o final?",
+    correct: "p2_a",
+    explanation: "Criar uma curiosidade específica (loop aberto) nos primeiros segundos é o que segura a retenção — em vez de informação genérica ou ausência de gancho.",
+    options: [
+      {key:"p2_a", letter:"A"},
+      {key:"p2_b", letter:"B"},
+      {key:"p2_c", letter:"C"},
+    ]
+  },
+  {
+    kicker: "ETAPA 3 · ORDEM DOS CÔMODOS",
+    prompt: "Qual a melhor ordem para apresentar os cômodos no tour?",
+    correct: "p3_a",
+    explanation: "Começar pelo cômodo mais impactante (sala ampla e integrada) prende a atenção logo no início, e a ordem lógica evita confundir o espectador sobre a planta do imóvel.",
+    options: [
+      {key:"p3_a", letter:"A"},
+      {key:"p3_b", letter:"B"},
+      {key:"p3_c", letter:"C"},
+    ]
+  },
+  {
+    kicker: "ETAPA 4 · ENQUADRAMENTO",
+    prompt: "Qual o melhor enquadramento para valorizar o espaço nos vídeos verticais?",
+    correct: "p4_a",
+    explanation: "Altura e ângulo naturais dão sensação de amplitude sem distorcer o espaço — essencial no vertical, que já é mais estreito.",
+    options: [
+      {key:"p4_a", letter:"A"},
+      {key:"p4_b", letter:"B"},
+      {key:"p4_c", letter:"C"},
+    ]
+  },
+  {
+    kicker: "ETAPA 5 · MOVIMENTO DE CÂMERA",
+    prompt: "Qual movimento de câmera funciona melhor para o tour?",
+    correct: "p5_a",
+    explanation: "Movimento suave e constante mantém a imersão sem cansar ou desorientar quem assiste; câmera tremida ou totalmente estática prejudicam a experiência.",
+    options: [
+      {key:"p5_a", letter:"A"},
+      {key:"p5_b", letter:"B"},
+      {key:"p5_c", letter:"C"},
+    ]
+  },
+  {
+    kicker: "ETAPA 6 · ILUMINAÇÃO",
+    prompt: "Qual a melhor abordagem de iluminação para o vídeo?",
+    correct: "p6_a",
+    explanation: "Luz natural combinada com luz interna deixa o imóvel com aparência mais espaçosa, acolhedora e fiel à realidade.",
+    options: [
+      {key:"p6_a", letter:"A"},
+      {key:"p6_b", letter:"B"},
+      {key:"p6_c", letter:"C"},
+    ]
+  },
+  {
+    kicker: "ETAPA 7 · TRILHA SONORA",
+    prompt: "Qual trilha sonora funciona melhor para esse tipo de vídeo?",
+    correct: "p7_a",
+    explanation: "Música leve em volume controlado cria ritmo e energia sem prejudicar a compreensão da fala — elemento importante para retenção.",
+    options: [
+      {key:"p7_a", letter:"A"},
+      {key:"p7_b", letter:"B"},
+      {key:"p7_c", letter:"C"},
+    ]
+  },
+  {
+    kicker: "ETAPA 8 · RITMO DE CORTE",
+    prompt: "Qual ritmo de corte entre cenas mantém melhor a atenção num vídeo de 60 segundos?",
+    correct: "p8_a",
+    explanation: "Ritmo ágil mas não excessivo mantém a atenção sem cansar nem confundir — planos muito longos perdem retenção, cortes rápidos demais atrapalham a leitura da cena.",
+    options: [
+      {key:"p8_a", letter:"A"},
+      {key:"p8_b", letter:"B"},
+      {key:"p8_c", letter:"C"},
+    ]
+  },
+  {
+    kicker: "ETAPA 9 · LEGENDAS / TEXTO NA TELA",
+    prompt: "Qual o melhor uso de legendas ou texto na tela no vídeo?",
+    correct: "p9_a",
+    explanation: "Legendas curtas e sincronizadas reforçam a mensagem e ajudam quem assiste sem som — texto excessivo ou ausência total de texto prejudicam a comunicação.",
+    options: [
+      {key:"p9_a", letter:"A"},
+      {key:"p9_b", letter:"B"},
+      {key:"p9_c", letter:"C"},
+    ]
+  },
+  {
+    kicker: "ETAPA 10 · ENCERRAMENTO / CTA",
+    prompt: "Qual o melhor encerramento (call to action) para o vídeo?",
+    correct: "p10_a",
+    explanation: "Um CTA claro e específico (ação concreta + canal de contato) converte atenção em contato real — encerramento sem CTA ou genérico desperdiça o interesse gerado.",
+    options: [
+      {key:"p10_a", letter:"A"},
+      {key:"p10_b", letter:"B"},
+      {key:"p10_c", letter:"C"},
+    ]
+  },
+];
+
+/* Preenchido conforme os vídeos vão sendo gerados no Gemini.
+   key -> URL do vídeo, ou null se ainda não existir. */
+const VIDEO_SRC = {
+  p1_a: "videos/p1_a.mp4", p1_b: "videos/p1_b.mp4", p1_c: "videos/p1_c.mp4",
+  p2_a: "videos/p2_a.mp4", p2_b: "videos/p2_b.mp4", p2_c: "videos/p2_c.mp4",
+  p3_a: "videos/p3_a.mp4", p3_b: "videos/p3_b.mp4", p3_c: "videos/p3_c.mp4",
+  p4_a: "videos/p4_a.mp4", p4_b: "videos/p4_b.mp4", p4_c: "videos/p4_c.mp4",
+  p5_a: "videos/p5_a.mp4", p5_b: "videos/p5_b.mp4", p5_c: "videos/p5_c.mp4",
+  p6_a: "videos/p6_a.mp4", p6_b: "videos/p6_b.mp4", p6_c: "videos/p6_c.mp4",
+  p7_a: "videos/p7_a.mp4", p7_b: "videos/p7_b.mp4", p7_c: "videos/p7_c.mp4",
+  p8_a: "videos/p8_a.mp4", p8_b: "videos/p8_b.mp4", p8_c: "videos/p8_c.mp4",
+  p9_a: "videos/p9_a.mp4", p9_b: "videos/p9_b.mp4", p9_c: "videos/p9_c.mp4",
+  p10_a: "videos/p10_a.mp4", p10_b: "videos/p10_b.mp4", p10_c: "videos/p10_c.mp4",
+};
+
+/* ======================================================
+   ESTADO E LÓGICA DO JOGO
+   ====================================================== */
+let state = {
+  nickname: "",
+  index: 0,
+  score: 0,
+  answered: false,
+  questionStartedAt: 0,
+  answersLog: [],
+};
+
+const el = (id) => document.getElementById(id);
+
+function shuffleArray(arr){
+  for(let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function formatMinSec(totalSeconds){
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.round(totalSeconds - minutes * 60);
+  const adjSeconds = seconds === 60 ? 0 : seconds;
+  const adjMinutes = seconds === 60 ? minutes + 1 : minutes;
+  return adjMinutes + "min " + String(adjSeconds).padStart(2, "0") + "s";
+}
+
+function buildProgressBar(){
+  const bar = el("progressBar");
+  bar.innerHTML = "";
+  QUESTIONS.forEach((_, i) => {
+    const d = document.createElement("div");
+    d.className = "dot";
+    d.dataset.i = i;
+    bar.appendChild(d);
+  });
+}
+
+function updateProgressBar(){
+  const dots = document.querySelectorAll("#progressBar .dot");
+  dots.forEach((d, i) => {
+    d.classList.remove("done", "current");
+    if(i < state.index) d.classList.add("done");
+    else if(i === state.index) d.classList.add("current");
+  });
+}
+
+function showScreen(name){
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  el("screen-" + name).classList.add("active");
+}
+
+function renderQuestion(){
+  state.answered = false;
+  state.questionStartedAt = Date.now();
+  const q = QUESTIONS[state.index];
+  el("qKicker").textContent = q.kicker;
+  el("qPrompt").textContent = q.prompt;
+  el("hudQuestion").textContent = (state.index + 1) + "/" + QUESTIONS.length;
+  el("hudScore").textContent = state.score;
+
+  const row = el("optionsRow");
+  row.innerHTML = "";
+
+  const shuffledOptions = shuffleArray(q.options.slice());
+  shuffledOptions.forEach(opt => {
+    const card = document.createElement("div");
+    card.className = "option";
+    card.dataset.key = opt.key;
+
+    const videoBox = document.createElement("div");
+    videoBox.className = "video-box";
+
+    const src = VIDEO_SRC[opt.key];
+    if(src){
+      const video = document.createElement("video");
+      video.src = src;
+      video.playsInline = true;
+      video.preload = "metadata";
+      videoBox.appendChild(video);
+
+      const overlay = document.createElement("div");
+      overlay.className = "play-overlay";
+      overlay.innerHTML = '<div class="play-circle"><svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg></div>';
+      videoBox.appendChild(overlay);
+
+      videoBox.addEventListener("click", () => {
+        video.controls = true;
+        video.play();
+        overlay.classList.add("hidden");
+      });
+      video.addEventListener("pause", () => {
+        if(video.currentTime > 0 && !video.ended) overlay.classList.add("hidden");
+      });
+    } else {
+      const ph = document.createElement("div");
+      ph.className = "placeholder";
+      ph.textContent = "Vídeo em produção — " + opt.key;
+      videoBox.appendChild(ph);
+    }
+
+    const body = document.createElement("div");
+    body.className = "option-body";
+
+    const pickBtn = document.createElement("button");
+    pickBtn.className = "pick-btn";
+    pickBtn.textContent = "Escolher esta opção";
+    pickBtn.addEventListener("click", () => selectOption(opt.key));
+
+    const verdict = document.createElement("div");
+    verdict.className = "verdict";
+    verdict.innerHTML = "<span></span>";
+
+    body.appendChild(pickBtn);
+    body.appendChild(verdict);
+
+    card.appendChild(videoBox);
+    card.appendChild(body);
+    row.appendChild(card);
+  });
+
+  el("explanationBox").classList.remove("show");
+  el("nextBtn").style.display = "none";
+  updateProgressBar();
+}
+
+function selectOption(key){
+  if(state.answered) return;
+  state.answered = true;
+
+  const q = QUESTIONS[state.index];
+  const isCorrect = key === q.correct;
+  const timeSeconds = Math.round((Date.now() - state.questionStartedAt) / 100) / 10;
+  const chosenOpt = q.options.find(o => o.key === key);
+  state.answersLog.push({
+    pergunta: state.index + 1,
+    etapa: q.kicker,
+    escolha: chosenOpt ? chosenOpt.letter : "",
+    correta: isCorrect,
+    tempoSegundos: timeSeconds,
+  });
+  if(isCorrect) state.score++;
+
+  document.querySelectorAll(".option").forEach(card => {
+    const cardKey = card.dataset.key;
+    const verdictEl = card.querySelector(".verdict span");
+    if(cardKey === q.correct){
+      card.classList.add("correct");
+      verdictEl.textContent = "Resposta certa";
+    } else if(cardKey === key){
+      card.classList.add("wrong");
+      verdictEl.textContent = "Não era essa";
+    } else {
+      card.classList.add("dimmed");
+    }
+    // pausa qualquer vídeo tocando
+    const v = card.querySelector("video");
+    if(v) v.pause();
+  });
+
+  el("explanationText").textContent = q.explanation;
+  el("explanationBox").classList.add("show");
+  el("hudScore").textContent = state.score;
+
+  const isLast = state.index === QUESTIONS.length - 1;
+  el("nextBtn").textContent = isLast ? "Ver resultado" : "Próxima pergunta";
+  el("nextBtn").style.display = "inline-block";
+}
+
+function nextQuestion(){
+  state.index++;
+  if(state.index >= QUESTIONS.length){
+    finishGame();
+  } else {
+    renderQuestion();
+  }
+}
+
+function tierForScore(score, total){
+  const pct = score / total;
+  if(pct === 1) return "Diretor de vídeo — acertou todas!";
+  if(pct >= 0.8) return "Cinegrafista afiado";
+  if(pct >= 0.5) return "No caminho certo";
+  return "Bora assistir de novo e afiar o olho";
+}
+
+function finishGame(){
+  const totalTime = Math.round(state.answersLog.reduce((sum, a) => sum + a.tempoSegundos, 0) * 10) / 10;
+  lastSavedTs = saveScore(state.nickname, state.agency, state.score, totalTime);
+  logPlayToSheetDb(totalTime);
+  el("finalScore").textContent = state.score + "/" + QUESTIONS.length;
+  el("finalTier").textContent = tierForScore(state.score, QUESTIONS.length);
+  colorProgressBarByResults();
+  renderLeaderboard();
+  el("hud").style.display = "none";
+  showScreen("results");
+}
+
+function colorProgressBarByResults(){
+  const dots = document.querySelectorAll("#progressBar .dot");
+  dots.forEach((d, i) => {
+    d.classList.remove("done", "current");
+    const answer = state.answersLog[i];
+    if(!answer) return;
+    d.classList.add(answer.correta ? "correct" : "wrong");
+  });
+}
+
+/* Ranking local (por dispositivo). Critério de desempate: menor
+   tempo total de resposta das 10 perguntas. Pode virar ranking
+   compartilhado entre dispositivos depois, se fizer sentido
+   para o evento. */
+const LB_KEY = "roteiro_relampago_leaderboard";
+
+function saveScore(name, agency, score, totalTime){
+  const ts = Date.now();
+  const list = JSON.parse(localStorage.getItem(LB_KEY) || "[]");
+  list.push({name: name || "Jogador", agency: agency || "", score, totalTime, ts});
+  list.sort((a,b) => b.score - a.score || (a.totalTime ?? 0) - (b.totalTime ?? 0));
+  localStorage.setItem(LB_KEY, JSON.stringify(list.slice(0, 20)));
+  return ts;
+}
+
+function renderLeaderboard(){
+  const list = JSON.parse(localStorage.getItem(LB_KEY) || "[]").slice(0, 10);
+  const box = el("leaderboard");
+  box.innerHTML = "";
+  list.forEach((entry, i) => {
+    const row = document.createElement("div");
+    row.className = "row" + (entry.ts === lastSavedTs ? " you" : "");
+    row.innerHTML =
+      '<span class="rank">' + (i+1) + '</span>' +
+      '<span class="name"></span>' +
+      '<span class="time"></span>' +
+      '<span class="pts">' + entry.score + '/' + QUESTIONS.length + '</span>';
+    const nameLabel = entry.agency ? (entry.name + " — " + entry.agency) : entry.name;
+    row.querySelector(".name").textContent = nameLabel;
+    row.querySelector(".time").textContent = (entry.totalTime != null ? formatMinSec(entry.totalTime) : "");
+    box.appendChild(row);
+  });
+  if(list.length === 0){
+    box.innerHTML = '<div class="row"><span class="name">Ninguém jogou ainda — seja o primeiro!</span></div>';
+  }
+}
+
+let lastSavedTs = null;
+
+/* Registra a partida no banco compartilhado do artefato (capability "db"),
+   para depois ser sincronizado com uma planilha do Google Sheets. */
+async function logPlayToSheetDb(totalTime){
+  try{
+    if(typeof claude === "undefined") return;
+    const db = await claude.use("db");
+    if(!db) return;
+    const id = (crypto.randomUUID ? crypto.randomUUID() : (Date.now() + "-" + Math.random().toString(36).slice(2)));
+    await db.doc("plays/" + id).set({
+      telefone: state.phone || "",
+      nome: state.nickname || "Jogador",
+      imobiliaria: state.agency || "",
+      email: state.email || "",
+      pontuacao: state.score,
+      total: QUESTIONS.length,
+      tempoTotalSegundos: totalTime,
+      respostas: state.answersLog,
+      dataHoraISO: new Date().toISOString(),
+      dataHoraTimestamp: Date.now(),
+    });
+  }catch(e){
+    console.error("Falha ao registrar partida no db:", e);
+  }
+}
+
+/* ===== Integração Supabase (via webhook n8n; a service_role fica só no n8n) ===== */
+const WEBHOOK_URL = "https://primary-production-03130.up.railway.app/webhook/roteiro-relampago-perfil";
+const TOTEM_ID = 5; // id deste totem na tabela perfil_totem_logs
+const LOOKUP_TIMEOUT_MS = 4000;
+
+function normalizePhone(v){
+  let d = String(v || "").replace(/\D/g, "");
+  if(/^55\d{10,11}$/.test(d)) d = d.slice(2);
+  return d;
+}
+function isValidPhone(v){ return /^\d{10,11}$/.test(normalizePhone(v)); }
+
+/* POST x-www-form-urlencoded = "requisição simples" (sem preflight de CORS) */
+async function callWebhook(payload, timeoutMs){
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try{
+    const r = await fetch(WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams(payload).toString(),
+      signal: ctrl.signal,
+      keepalive: true,
+    });
+    if(!r.ok) return null;
+    return await r.json();
+  }catch(e){
+    return null;
+  }finally{
+    clearTimeout(t);
+  }
+}
+/* fire-and-forget: nunca bloqueia o visitante */
+function fireAndForget(payload){ callWebhook(payload, 8000).catch(() => {}); }
+
+function logVisit(phone){
+  if(TOTEM_ID) fireAndForget({ action: "log", telefone: phone, totem_id: String(TOTEM_ID) });
+}
+
+/* contato do jogo (imobiliária/e-mail) lembrado por telefone, só neste navegador */
+function loadContact(phone){
+  try{ return JSON.parse(localStorage.getItem("rr_contact_" + phone) || "null") || {}; }catch(e){ return {}; }
+}
+function saveContact(phone, data){
+  try{ localStorage.setItem("rr_contact_" + phone, JSON.stringify(data)); }catch(e){}
+}
+
+let session = { phone: "", nome: "", isNew: false };
+
+function updatePhoneButtonState(){
+  el("phoneBtn").disabled = !isValidPhone(el("phoneInput").value);
+}
+function validatePhoneField(){
+  const v = el("phoneInput").value.trim();
+  const field = el("phoneInput").closest(".field");
+  field.classList.toggle("invalid", v.length > 0 && !isValidPhone(v) && v.replace(/\D/g,"").length >= 12);
+}
+
+async function submitPhone(){
+  const phone = normalizePhone(el("phoneInput").value);
+  if(!isValidPhone(phone)) return;
+  const btn = el("phoneBtn");
+  btn.disabled = true;
+  btn.textContent = "Buscando seu cadastro...";
+  const res = await callWebhook({ action: "lookup", telefone: phone }, LOOKUP_TIMEOUT_MS);
+  btn.textContent = "Continuar";
+  session = { phone, nome: "", isNew: true };
+  if(res && res.found && res.perfil && res.perfil.nome){
+    session.nome = res.perfil.nome;
+    session.isNew = false;
+    logVisit(phone);
+    goToGameData();
+  }else{
+    // não achou (ou falhou/timeout): trata como pessoa nova
+    showScreen("profile");
+    updateProfileButtonState();
+  }
+  btn.disabled = !isValidPhone(el("phoneInput").value);
+}
+
+function updateProfileButtonState(){
+  el("profileBtn").disabled = el("pfNome").value.trim().length === 0;
+}
+
+function submitProfile(){
+  const nome = el("pfNome").value.trim();
+  if(!nome) return;
+  session.nome = nome;
+  fireAndForget({
+    action: "save",
+    telefone: session.phone,
+    nome,
+    tipo: el("pfTipo").value,
+    funcao: el("pfFuncao").value.trim(),
+    foco: el("pfFoco").value.trim(),
+    faixa_preco: el("pfFaixa").value.trim(),
+    canais: el("pfCanais").value.trim(),
+    regiao: el("pfRegiao").value.trim(),
+  });
+  logVisit(session.phone);
+  goToGameData();
+}
+
+function goToGameData(){
+  const saved = loadContact(session.phone);
+  el("greeting").textContent = "Olá, " + session.nome + "!";
+  el("agencyInput").value = saved.agency || "";
+  el("emailInput").value = saved.email || "";
+  updateStartButtonState();
+  validateEmailField();
+  showScreen("intro");
+}
+
+function startGame(){
+  state = { phone: session.phone, nickname: session.nome, agency: el("agencyInput").value.trim(), email: el("emailInput").value.trim(), index: 0, score: 0, answered: false, questionStartedAt: 0, answersLog: [] };
+  saveContact(session.phone, { agency: state.agency, email: state.email });
+  lastSavedTs = Date.now();
+  el("hud").style.display = "flex";
+  showScreen("question");
+  renderQuestion();
+}
+
+function isValidEmail(value){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function updateStartButtonState(){
+  const agencyOk = el("agencyInput").value.trim().length > 0;
+  const emailOk = isValidEmail(el("emailInput").value.trim());
+  el("startBtn").disabled = !(agencyOk && emailOk);
+}
+
+function validateEmailField(){
+  const emailVal = el("emailInput").value.trim();
+  const field = el("emailInput").closest(".field");
+  if(emailVal.length > 0 && !isValidEmail(emailVal)){
+    field.classList.add("invalid");
+  } else {
+    field.classList.remove("invalid");
+  }
+}
+
+el("phoneInput").addEventListener("input", () => { updatePhoneButtonState(); validatePhoneField(); });
+el("phoneInput").addEventListener("keydown", e => { if(e.key === "Enter") submitPhone(); });
+el("phoneBtn").addEventListener("click", submitPhone);
+el("pfNome").addEventListener("input", updateProfileButtonState);
+el("profileBtn").addEventListener("click", submitProfile);
+el("agencyInput").addEventListener("input", updateStartButtonState);
+el("emailInput").addEventListener("input", () => { updateStartButtonState(); validateEmailField(); });
+el("emailInput").addEventListener("blur", validateEmailField);
+
+function resetToIntro(){
+  ["phoneInput","pfNome","pfFuncao","pfFoco","pfFaixa","pfCanais","pfRegiao","agencyInput","emailInput"].forEach(id => el(id).value = "");
+  el("pfTipo").value = "";
+  el("emailInput").closest(".field").classList.remove("invalid");
+  el("phoneInput").closest(".field").classList.remove("invalid");
+  session = { phone: "", nome: "", isNew: false };
+  updatePhoneButtonState();
+  updateStartButtonState();
+  el("hud").style.display = "none";
+  buildProgressBar();
+  showScreen("phone");
+}
+
+el("startBtn").addEventListener("click", startGame);
+el("nextBtn").addEventListener("click", nextQuestion);
+el("replayBtn").addEventListener("click", resetToIntro);
+
+/* Acesse este link com ?resetranking=1 no final da URL para
+   limpar o ranking salvo neste navegador (ex.: depois de testes). */
+if(new URLSearchParams(window.location.search).get("resetranking") === "1"){
+  localStorage.removeItem(LB_KEY);
+}
+
+buildProgressBar();
+</script>
+</body>
+</html>
