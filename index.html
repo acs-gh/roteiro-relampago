@@ -891,6 +891,19 @@ function selectOption(key){
     tempoSegundos: timeSeconds,
   });
   if(isCorrect) state.score++;
+  fireAndForget({
+    action: "answer",
+    partida_id: state.partidaId,
+    telefone: state.phone || "",
+    nome: state.nickname || "",
+    imobiliaria: state.agency || "",
+    pergunta: String(state.index + 1),
+    etapa: q.kicker,
+    escolha: chosenOpt ? chosenOpt.letter : "",
+    correta: String(isCorrect),
+    tempo_segundos: String(timeSeconds),
+    totem_id: TOTEM_ID ? String(TOTEM_ID) : "",
+  });
 
   document.querySelectorAll(".option").forEach(card => {
     const cardKey = card.dataset.key;
@@ -1001,6 +1014,13 @@ let lastSavedTs = null;
 function logPlayToN8n(totalTime){
   fireAndForget({
     action: "play",
+    partida_id: state.partidaId || "",
+    tipo: (session.perfil && session.perfil.tipo) || "",
+    funcao: (session.perfil && session.perfil.funcao) || "",
+    foco: (session.perfil && session.perfil.foco) || "",
+    faixa_preco: (session.perfil && session.perfil.faixa_preco) || "",
+    canais: (session.perfil && session.perfil.canais) || "",
+    regiao: (session.perfil && session.perfil.regiao) || "",
     telefone: state.phone || "",
     nome: state.nickname || "",
     imobiliaria: state.agency || "",
@@ -1085,7 +1105,7 @@ function saveContact(phone, data){
   try{ localStorage.setItem("rr_contact_" + phone, JSON.stringify(data)); }catch(e){}
 }
 
-let session = { phone: "", nome: "", isNew: false };
+let session = { phone: "", nome: "", isNew: false, perfil: {} };
 
 function updatePhoneButtonState(){
   el("phoneBtn").disabled = !isValidPhone(el("phoneInput").value);
@@ -1104,9 +1124,10 @@ async function submitPhone(){
   btn.textContent = "Buscando seu cadastro...";
   const res = await callWebhook({ action: "lookup", telefone: phone }, LOOKUP_TIMEOUT_MS);
   btn.textContent = "Continuar";
-  session = { phone, nome: "", isNew: true };
+  session = { phone, nome: "", isNew: true, perfil: {} };
   if(res && res.found && res.perfil && res.perfil.nome){
     session.nome = res.perfil.nome;
+    session.perfil = res.perfil;
     session.isNew = false;
     logVisit(phone);
     goToGameData();
@@ -1318,6 +1339,7 @@ function submitProfile(){
   if(!pfValid()) return;
   const data = pfBuildPayload();
   session.nome = data.nome;
+  session.perfil = data;
   fireAndForget(Object.assign({ action: "save", telefone: session.phone }, data));
   logVisit(session.phone);
   goToGameData();
@@ -1334,7 +1356,7 @@ function goToGameData(){
 }
 
 function startGame(){
-  state = { phone: session.phone, nickname: session.nome, agency: el("agencyInput").value.trim(), email: el("emailInput").value.trim(), index: 0, score: 0, answered: false, questionStartedAt: 0, answersLog: [] };
+  state = { partidaId: (crypto.randomUUID ? crypto.randomUUID() : (Date.now() + "-" + Math.random().toString(36).slice(2))), phone: session.phone, nickname: session.nome, agency: el("agencyInput").value.trim(), email: el("emailInput").value.trim(), index: 0, score: 0, answered: false, questionStartedAt: 0, answersLog: [] };
   saveContact(session.phone, { agency: state.agency, email: state.email });
   lastSavedTs = Date.now();
   el("hud").style.display = "flex";
@@ -1376,7 +1398,7 @@ function resetToIntro(){
   pfReset();
   el("emailInput").closest(".field").classList.remove("invalid");
   el("phoneInput").closest(".field").classList.remove("invalid");
-  session = { phone: "", nome: "", isNew: false };
+  session = { phone: "", nome: "", isNew: false, perfil: {} };
   updatePhoneButtonState();
   updateStartButtonState();
   el("hud").style.display = "none";
