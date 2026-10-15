@@ -957,6 +957,7 @@ function finishGame(){
   el("finalTier").textContent = tierForScore(state.score, QUESTIONS.length);
   colorProgressBarByResults();
   renderLeaderboard();
+  loadSharedLeaderboard({ nome: state.nickname || "Jogador", agency: state.agency || "", score: state.score, totalTime }, 0);
   el("hud").style.display = "none";
   showScreen("results");
 }
@@ -986,26 +987,61 @@ function saveScore(name, agency, score, totalTime){
   return ts;
 }
 
-function renderLeaderboard(){
-  const list = JSON.parse(localStorage.getItem(LB_KEY) || "[]").slice(0, 10);
+function renderRows(entries, isYou){
   const box = el("leaderboard");
   box.innerHTML = "";
-  list.forEach((entry, i) => {
+  entries.forEach((entry, i) => {
     const row = document.createElement("div");
-    row.className = "row" + (entry.ts === lastSavedTs ? " you" : "");
+    row.className = "row" + (isYou(entry) ? " you" : "");
     row.innerHTML =
       '<span class="rank">' + (i+1) + '</span>' +
       '<span class="name"></span>' +
       '<span class="time"></span>' +
       '<span class="pts">' + entry.score + '/' + QUESTIONS.length + '</span>';
-    const nameLabel = entry.agency ? (entry.name + " — " + entry.agency) : entry.name;
-    row.querySelector(".name").textContent = nameLabel;
+    row.querySelector(".name").textContent = entry.agency ? (entry.name + " — " + entry.agency) : entry.name;
     row.querySelector(".time").textContent = (entry.totalTime != null ? formatMinSec(entry.totalTime) : "");
     box.appendChild(row);
   });
-  if(list.length === 0){
+  if(entries.length === 0){
     box.innerHTML = '<div class="row"><span class="name">Ninguém jogou ainda — seja o primeiro!</span></div>';
   }
+}
+
+/* Fallback: ranking local deste navegador (usado se o placar compartilhado não responder) */
+function renderLeaderboard(){
+  const list = JSON.parse(localStorage.getItem(LB_KEY) || "[]").slice(0, 10);
+  renderRows(list, e => e.ts === lastSavedTs);
+}
+
+/* Placar compartilhado (mesma fonte da página placar.html) */
+const PLACAR_URL = "https://primary-production-03130.up.railway.app/webhook/roteiro-relampago-placar";
+
+async function fetchPlacar(){
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 6000);
+  try{
+    const r = await fetch(PLACAR_URL + "?t=" + Date.now(), { cache: "no-store", signal: ctrl.signal });
+    if(!r.ok) return null;
+    return await r.json();
+  }catch(e){
+    return null;
+  }finally{
+    clearTimeout(t);
+  }
+}
+
+async function loadSharedLeaderboard(me, attempt){
+  const data = await fetchPlacar();
+  if(!data || !Array.isArray(data.ranking)) return; // mantém o ranking local já exibido
+  const isMe = (e) => e && e.nome === me.nome && (e.imobiliaria || "") === me.agency &&
+    e.pontuacao === me.score && Math.abs((e.tempo || 0) - me.totalTime) < 0.06;
+  const present = data.ranking.some(isMe) || isMe(data.ultimo);
+  // a partida é enviada em segundo plano: se ainda não chegou, tenta de novo
+  if(!present && attempt < 2){
+    setTimeout(() => loadSharedLeaderboard(me, attempt + 1), 2500);
+  }
+  const entries = data.ranking.map(e => ({ name: e.nome, agency: e.imobiliaria, score: e.pontuacao, totalTime: e.tempo, _raw: e }));
+  renderRows(entries, e => isMe(e._raw));
 }
 
 let lastSavedTs = null;
