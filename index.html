@@ -1143,7 +1143,7 @@ let pfStep = 1;
 const PF_STEPS = 5;
 
 function pfReset(){
-  pf = { nome:"", tipo:"", funcao:"", funcaoOutro:"", foco:new Set(), faixaAluguel:new Set(), faixaVenda:new Set(), uf:"", regioes:new Set(), canais:new Set(), canaisOutro:"" };
+  pf = { nome:"", tipo:"", funcao:"", funcaoOutro:"", foco:new Set(), faixaAluguel:new Set(), faixaVenda:new Set(), ufs:new Set(), regioes:{}, canais:new Set(), canaisOutro:"" };
   pfStep = 1;
 }
 function pfToggle(set, v){ set.has(v) ? set.delete(v) : set.add(v); }
@@ -1170,7 +1170,7 @@ function pfValid(){
       if(pf.foco.has("aluguel") && pf.faixaAluguel.size === 0) return false;
       if(pfHasVenda() && pf.faixaVenda.size === 0) return false;
       return true;
-    case 4: return !!pf.uf && pf.regioes.size > 0;
+    case 4: return pf.ufs.size > 0 && [...pf.ufs].every(u => pf.regioes[u] && pf.regioes[u].size > 0);
     case 5: return pf.canais.size > 0 && (!pf.canais.has("Outros") || pf.canaisOutro.trim().length > 0);
   }
   return false;
@@ -1237,10 +1237,10 @@ function pfRender(){
     }
   }
   else if(pfStep === 4){
-    mkTitle(body, "Onde você atua?", "Escolha o estado e a região de atuação.");
-    const pickUF = (v) => {
-      pf.uf = v;
-      if(!UF_LITORAL.includes(v)) pf.regioes.delete("Litoral");
+    mkTitle(body, "Onde você atua?", "Toque nos estados em que você atua. Pode marcar mais de um.");
+    const toggleUF = (v) => {
+      if(pf.ufs.has(v)){ pf.ufs.delete(v); delete pf.regioes[v]; }
+      else { pf.ufs.add(v); pf.regioes[v] = new Set(); }
       pfRender();
     };
     const NS = "http://www.w3.org/2000/svg";
@@ -1248,33 +1248,33 @@ function pfRender(){
     svg.setAttribute("viewBox", BR_MAP.viewBox);
     svg.setAttribute("class", "br-map");
     svg.setAttribute("role", "group");
-    svg.setAttribute("aria-label", "Mapa do Brasil: escolha o estado");
+    svg.setAttribute("aria-label", "Mapa do Brasil: escolha os estados");
     BR_MAP.s.forEach(st => {
       const path = document.createElementNS(NS, "path");
       path.setAttribute("d", st.p);
-      path.setAttribute("class", pf.uf === st.id ? "sel" : "");
+      path.setAttribute("class", pf.ufs.has(st.id) ? "sel" : "");
       path.setAttribute("tabindex", "0");
       path.setAttribute("role", "button");
       path.setAttribute("aria-label", st.n);
-      path.setAttribute("aria-pressed", pf.uf === st.id ? "true" : "false");
+      path.setAttribute("aria-pressed", pf.ufs.has(st.id) ? "true" : "false");
       const t = document.createElementNS(NS, "title"); t.textContent = st.n; path.appendChild(t);
-      path.addEventListener("click", () => pickUF(st.id));
-      path.addEventListener("keydown", e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); pickUF(st.id); } });
+      path.addEventListener("click", () => toggleUF(st.id));
+      path.addEventListener("keydown", e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); toggleUF(st.id); } });
       svg.appendChild(path);
     });
     body.appendChild(svg);
     const picked = document.createElement("div");
     picked.className = "map-picked";
-    const cur = BR_MAP.s.find(x => x.id === pf.uf);
-    picked.textContent = cur ? cur.n + " (" + cur.id + ")" : "Toque no seu estado";
+    picked.textContent = pf.ufs.size ? "Selecionados: " + PF_UFS.filter(u => pf.ufs.has(u)).join(", ") : "Toque nos seus estados";
     body.appendChild(picked);
     const fb = document.createElement("div"); fb.className = "map-fallback"; fb.textContent = "Estado pequeno de acertar? Escolha pela sigla:"; body.appendChild(fb);
-    body.appendChild(mkChips(opts(PF_UFS), v => pf.uf === v, v => { pf.uf = v; if(!UF_LITORAL.includes(v)) pf.regioes.delete("Litoral"); }, "uf"));
-    if(pf.uf){
-      mkSub(body, "Região de atuação · " + pf.uf);
-      const regs = ["Capital", "Interior"].concat(UF_LITORAL.includes(pf.uf) ? ["Litoral"] : []);
-      body.appendChild(mkChips(opts(regs), v => pf.regioes.has(v), v => pfToggle(pf.regioes, v)));
-    }
+    body.appendChild(mkChips(opts(PF_UFS), v => pf.ufs.has(v), v => toggleUF(v), "uf"));
+    PF_UFS.filter(u => pf.ufs.has(u)).forEach(u => {
+      const st = BR_MAP.s.find(x => x.id === u);
+      mkSub(body, "Região de atuação · " + (st ? st.n : u));
+      const regs = ["Capital", "Interior"].concat(UF_LITORAL.includes(u) ? ["Litoral"] : []);
+      body.appendChild(mkChips(opts(regs), v => pf.regioes[u].has(v), v => pfToggle(pf.regioes[u], v)));
+    });
   }
   else if(pfStep === 5){
     mkTitle(body, "Onde você divulga hoje?", "Pode marcar mais de uma plataforma.");
@@ -1304,7 +1304,7 @@ function pfBuildPayload(){
   if(pf.foco.has("aluguel")) faixas.push("Aluguel: " + PF_FAIXAS_ALUGUEL.filter(x => pf.faixaAluguel.has(x)).join(", "));
   if(pfHasVenda()) faixas.push("Venda: " + PF_FAIXAS_VENDA.filter(x => pf.faixaVenda.has(x)).join(", "));
   const canais = PF_CANAIS.filter(c => pf.canais.has(c)).map(c => c === "Outros" ? "Outros: " + pf.canaisOutro.trim() : c);
-  const regiao = pf.uf + ": " + ["Capital","Interior","Litoral"].filter(r => pf.regioes.has(r)).join(", ");
+  const regiao = PF_UFS.filter(u => pf.ufs.has(u)).map(u => u + ": " + ["Capital","Interior","Litoral"].filter(r => pf.regioes[u].has(r)).join(", ")).join(" | ");
   return {
     nome: pf.nome.trim(), tipo: tipoLabel, funcao,
     foco: focoLabels.join(", "), faixa_preco: faixas.join(" | "),
