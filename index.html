@@ -1046,6 +1046,23 @@ async function loadSharedLeaderboard(me, attempt){
 
 let lastSavedTs = null;
 
+/* Cadastro completo (perfil + imobiliária + e-mail): grava no Supabase (se novo) e cria a linha da partida
+   no n8n com status "em andamento". No fim do jogo, a ação "play" atualiza essa mesma linha. */
+function registerPlayer(){
+  const p = session.perfil || {};
+  fireAndForget({
+    action: "register",
+    partida_id: state.partidaId || "",
+    telefone: state.phone || "",
+    nome: state.nickname || "",
+    imobiliaria: state.agency || "",
+    email: state.email || "",
+    tipo: p.tipo || "", funcao: p.funcao || "", foco: p.foco || "",
+    faixa_preco: p.faixa_preco || "", canais: p.canais || "", regiao: p.regiao || "",
+    totem_id: TOTEM_ID ? String(TOTEM_ID) : "",
+  });
+}
+
 /* Envia a partida para a tabela do n8n (fire-and-forget, nunca bloqueia o jogador) */
 function logPlayToN8n(totalTime){
   fireAndForget({
@@ -1394,6 +1411,7 @@ function goToGameData(){
 function startGame(){
   state = { partidaId: (crypto.randomUUID ? crypto.randomUUID() : (Date.now() + "-" + Math.random().toString(36).slice(2))), phone: session.phone, nickname: session.nome, agency: el("agencyInput").value.trim(), email: el("emailInput").value.trim(), index: 0, score: 0, answered: false, questionStartedAt: 0, answersLog: [] };
   saveContact(session.phone, { agency: state.agency, email: state.email });
+  registerPlayer();
   lastSavedTs = Date.now();
   el("hud").style.display = "flex";
   showScreen("question");
